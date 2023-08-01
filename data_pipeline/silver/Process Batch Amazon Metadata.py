@@ -144,14 +144,58 @@ udf_process_rank = f.udf(lambda z: process_rank(z),
 
 # COMMAND ----------
 
+for file_ in dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta/"):
+    print(file_)
+
+# COMMAND ----------
+
+bronze_columns = spark.table("products.bronze.amazon_metadata_bronze").columns
+bronze_columns
+
+# COMMAND ----------
+
+len(dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta/"))
+
+# COMMAND ----------
+
+for file_ in dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta/"):
+    print(f"Processing batch {file_} ...")
+    table = (
+        spark.read.format("parquet").load(file_.path + "*")
+    )
+
+    for i in range(len(table.columns)):
+        table = table.withColumnRenamed(table.columns[i], bronze_columns[i])
+    table.display()
+    break
+
+# COMMAND ----------
+
+import tqdm
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC DROP TABLE IF EXISTS products.silver.amazon_metadata_silver;
+
+# COMMAND ----------
+
 partition = Window.orderBy(f.lit("A"))
 select_columns = ["asin", "title", "brand", "main_category", "category", "description", "feature", "mean_price", "rank", "also_buy", "also_view", "similar_items", "image", "source", "timestamp_ingested"]
 
-for i in range(1, 10000, 15023060):
-    (
-        spark.table("products.bronze.amazon_metadata_bronze")
-        .withColumn("row_number", f.row_number().over(partition))
-        .filter((f.col("row_number") >= i) & (f.col("row_number") < i + 10000))
+#counter = 1
+for file_ in tqdm.tqdm(dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta/")[95:]):
+    print(f"Processing batch {file_} ... with counter {counter}")
+    table = (
+        spark.read.format("parquet").load(file_.path + "*")
+    )
+
+    #print(table.count())
+    #break
+    for i in range(len(table.columns)):
+        table = table.withColumnRenamed(table.columns[i], bronze_columns[i])
+    table = (
+        table
         .withColumn("also_buy", udf_process_arrays(f.col("also_buy")))
         .withColumn("also_view", udf_process_arrays(f.col("also_view")))
         .withColumn("also_buy", f.when(f.size(f.col("also_buy")) == 0, f.lit(None)).otherwise(f.col("also_buy")))
@@ -195,7 +239,9 @@ for i in range(1, 10000, 15023060):
         .drop("fit")
         .drop("tech1") #no time
         .drop("tech2") #no time
+        #.drop("row_number")
         .select(select_columns)
+        #.display()
         .write
         .format("delta")
         .mode("append")
@@ -204,12 +250,13 @@ for i in range(1, 10000, 15023060):
             path = SILVER_BUCKET_NAME + "/amazon_metadata_silver.delta"
         )
     )
+    counter += 1
+
+# COMMAND ----------
+
+dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta/")[95:]
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ## We are done!
-
-# COMMAND ----------
-
-
