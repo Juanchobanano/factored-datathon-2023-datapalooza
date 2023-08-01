@@ -9,7 +9,7 @@
 # MAGIC CREATE SCHEMA bronze;
 # MAGIC CREATE SCHEMA silver;
 # MAGIC CREATE SCHEMA gold;
-# MAGIC CREATE SCHEMA premium;
+# MAGIC CREATE SCHEMA platinum;
 
 # COMMAND ----------
 
@@ -31,7 +31,3 @@
 # MAGIC %sql
 # MAGIC DROP TABLE IF EXISTS products.silver.amazon_reviews;
 # MAGIC DROP TABLE IF EXISTS products.silver.sample_amazon_metadata;
-
-# COMMAND ----------
-
-

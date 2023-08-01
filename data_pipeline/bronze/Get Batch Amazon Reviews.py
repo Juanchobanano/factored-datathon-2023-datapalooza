@@ -127,7 +127,3 @@ bronze = spark.table("products.bronze.amazon_reviews") #.withColumn("source", f.
 bronze = bronze.withColumn("timestamp_ingested", f.lit("2023-07-26 00:00:00"))
 bronze = bronze.withColumn("timestamp_ingested", f.col("timestamp_ingested").cast("timestamp"))
 bronze.write.format("delta").mode("overwrite").option("mergeSchema", "true").saveAsTable("products.bronze.amazon_reviews_bronze", path = BRONZE_BUCKET_NAME + "/amazon_reviews_bronze.delta")
-
-# COMMAND ----------
-
-

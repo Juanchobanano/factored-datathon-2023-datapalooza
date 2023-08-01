@@ -7,10 +7,6 @@ silver.columns
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 silver_reviews = spark.table("products.silver.amazon_reviews_silver")
 silver_metadata = spark.table("products.silver.amazon_metadata_silver")
 
@@ -28,7 +24,3 @@ silver_reviews.join(
 
 import pyspark.sql.functions as f
 silver_metadata.groupBy(f.col("main_category")).count().display()
-
-# COMMAND ----------
-
-
