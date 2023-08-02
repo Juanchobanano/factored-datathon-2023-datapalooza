@@ -75,30 +75,45 @@ BRONZE_BUCKET_NAME = "s3://datapalooza-products-reviews-bronze"
 test = "online"
 checkpointLocation_bronze = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_bronze"
 checkpointLocation_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_silver"
-path_bronze = f"{BRONZE_BUCKET_NAME}/streaming/{test}/amazon_reviews_bronze.delta"
-path_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/amazon_reviews_silver.delta"
+checkpointLocation_selected_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_selected_silver"
+# path_bronze = f"{BRONZE_BUCKET_NAME}/streaming/{test}/amazon_reviews_bronze.delta"
+path_bronze = "s3://datapalooza-products-reviews-bronze/amazon_reviews_bronze.delta"
+# path_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/amazon_reviews_silver.delta"
+path_silver = "s3://datapalooza-products-reviews-silver/amazon_reviews_silver.delta"
+path_selected_silver = "s3://datapalooza-products-reviews-silver/amazon_reviews_selected"
 
 # COMMAND ----------
 
 print(f"checkpointLocation_bronze: {checkpointLocation_bronze}")
 print(f"checkpointLocation_silver: {checkpointLocation_silver}")
+print(f"checkpointLocation_selected_silver: {checkpointLocation_selected_silver}")
 print(f"path_bronze: {path_bronze}")
 print(f"path_silver: {path_silver}")
+print(f"path_selected_silver: {path_selected_silver}")
 
 # COMMAND ----------
 
-# Write streaming data to bronze
-write_to_bronze_query = (
+# Processed data from streaming
+streaming_amazon_reviews_processed = (
     streaming_amazon_reviews
     .withColumn("value", decode(col("value"), "utf-8"))
     .withColumn("data", from_json(col("value"), schema))
     .select("data.*", "timestamp")
     .withColumn("unixReviewTime", unix_timestamp(col("timestamp")))
+    .withColumn("unixReviewTime", col("timestamp").cast(StringType()))    
     .withColumn("source", lit("streaming"))
     .withColumnRenamed("timestamp", "timestamp_ingested")
+)
+
+# COMMAND ----------
+
+# Write streaming data to bronze
+write_to_bronze_query = (
+    streaming_amazon_reviews_processed
     .writeStream
     .format("delta")
     .outputMode("append")
+    # .trigger(once=True)
     .option("checkpointLocation", checkpointLocation_bronze)
     .option("path", path_bronze)
 )
@@ -109,13 +124,10 @@ write_to_bronze_query.start()
 
 # COMMAND ----------
 
-# Write streaming data to silver
+# Write streaming (offline) data to general silver
 
 write_to_silver_query = (
-    spark
-    .readStream
-    .format("delta")
-    .load(path_bronze)    
+    streaming_amazon_reviews_processed
     .withColumn("image", split(regexp_replace(col("image"), r"[\[\]]", ""), ","))
     .withColumn("overall", col("overall").cast("int"))
     .withColumn("unixReviewTime", to_date(from_unixtime(col("unixReviewTime"))))
@@ -124,9 +136,11 @@ write_to_silver_query = (
     .withColumn("vote", col("vote").cast("int"))
     .drop("style")
     .filter(col("asin").isNotNull())
+    .dropDuplicates()
     .writeStream
     .format("delta")
     .outputMode("append")
+    # .trigger(once=True)
     .option("checkpointLocation", checkpointLocation_silver)
     .option("path", path_silver)
 )
@@ -137,24 +151,43 @@ write_to_silver_query.start()
 
 # COMMAND ----------
 
-#Tener tablas creadas previamente
+categories = spark.table("products.silver.amazon_categories_selected")
 
 # COMMAND ----------
 
-(   
-    spark
-    .readStream
-    .format("delta")
-    .load(path_silver)  
-    .groupBy()
-    .count()
-).display()
+# Write streaming data to selected silver
+
+write_to_selected_silver_process = (
+    streaming_amazon_reviews_processed   
+    .withColumn("image", split(regexp_replace(col("image"), r"[\[\]]", ""), ","))
+    .withColumn("overall", col("overall").cast("int"))
+    .withColumn("unixReviewTime", to_date(from_unixtime(col("unixReviewTime"))))
+    .withColumnRenamed("unixReviewTime", "date")
+    .withColumn("verified", when(col("verified") == "true", lit(True)).otherwise(lit(False)))
+    .withColumn("vote", col("vote").cast("int"))
+    .drop("style")
+    .dropDuplicates()
+    .join(categories, on="asin", how="left_outer")
+    .filter(col("main_category").isNotNull())
+)
 
 # COMMAND ----------
 
-(   
-    spark
-    .readStream
+write_to_selected_silver_process.display()
+
+# COMMAND ----------
+
+write_to_selected_silver_query = (
+    write_to_selected_silver_process
+    .drop("main_category")
+    .writeStream
     .format("delta")
-    .load(path_silver)  
-).display()
+    .outputMode("append")
+    # .trigger(once=True)
+    .option("checkpointLocation", checkpointLocation_selected_silver)
+    .option("path", path_selected_silver)
+)
+
+# COMMAND ----------
+
+write_to_selected_silver_query.start()

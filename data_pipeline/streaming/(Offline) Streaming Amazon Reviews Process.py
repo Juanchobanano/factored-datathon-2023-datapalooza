@@ -1,7 +1,7 @@
 # Databricks notebook source
 # import dlt
-from pyspark.sql.types import StructType, StructField, StringType, TimestampType
-from pyspark.sql.functions import decode, col, from_json, lit, length, unix_timestamp
+from pyspark.sql.types import StructType, StructField, StringType, TimestampType, ArrayType
+from pyspark.sql.functions import decode, col, from_json, lit, length, to_date, from_unixtime, when, unix_timestamp, regexp_replace, split
 
 # COMMAND ----------
 
@@ -50,42 +50,6 @@ streaming_amazon_reviews.groupBy().count().display()
 
 # COMMAND ----------
 
-BRONZE_BUCKET_NAME = "s3://datapalooza-products-reviews-bronze"
-test = "offline"
-checkpointLocation = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation"
-path = f"{BRONZE_BUCKET_NAME}/streaming/{test}/amazon_reviews_bronze_sample.delta"
-
-# COMMAND ----------
-
-write_to_bronze_query = (
-    streaming_amazon_reviews
-    .withColumn("value", decode(col("value"), "utf-8"))
-    .writeStream
-    .format("delta")
-    .trigger(once=True) 
-    .outputMode("append")
-    .option("checkpointLocation", checkpointLocation)
-    .option("path", path)
-)
-
-# COMMAND ----------
-
-write_to_bronze_query.start().awaitTermination()
-
-# COMMAND ----------
-
-df = spark.read.format("delta").load(path)
-
-# COMMAND ----------
-
-df.count()
-
-# COMMAND ----------
-
-df.display()
-
-# COMMAND ----------
-
 # Schema of raw streaming data that would be ingested on bronze table 
 
 schema = StructType(
@@ -107,18 +71,151 @@ schema = StructType(
 
 # COMMAND ----------
 
-(
-    df.
-    withColumn("data", from_json(col("value"), schema))
+BRONZE_BUCKET_NAME = "s3://datapalooza-products-reviews-bronze"
+test = "offline"
+checkpointLocation_bronze = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_bronze"
+checkpointLocation_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_silver"
+checkpointLocation_selected_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_selected_silver"
+# path_bronze = f"{BRONZE_BUCKET_NAME}/streaming/{test}/amazon_reviews_bronze.delta"
+path_bronze = "s3://datapalooza-products-reviews-bronze/amazon_reviews_bronze.delta"
+# path_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/amazon_reviews_silver.delta"
+path_silver = "s3://datapalooza-products-reviews-silver/amazon_reviews_silver.delta"
+path_selected_silver = "s3://datapalooza-products-reviews-silver/amazon_reviews_selected"
+
+# COMMAND ----------
+
+print(f"checkpointLocation_bronze: {checkpointLocation_bronze}")
+print(f"checkpointLocation_silver: {checkpointLocation_silver}")
+print(f"checkpointLocation_selected_silver: {checkpointLocation_selected_silver}")
+print(f"path_bronze: {path_bronze}")
+print(f"path_silver: {path_silver}")
+print(f"path_selected_silver: {path_selected_silver}")
+
+# COMMAND ----------
+
+# Processed data from streaming
+streaming_amazon_reviews_processed = (
+    streaming_amazon_reviews
+    .withColumn("value", decode(col("value"), "utf-8"))
+    .withColumn("data", from_json(col("value"), schema))
     .select("data.*", "timestamp")
     .withColumn("unixReviewTime", unix_timestamp(col("timestamp")))
-    .drop("timestamp")
-).display()
+    .withColumn("unixReviewTime", col("timestamp").cast(StringType()))    
+    .withColumn("source", lit("streaming"))
+    .withColumnRenamed("timestamp", "timestamp_ingested")
+)
 
 # COMMAND ----------
 
-spark.table("products.silver.amazon_reviews_silver").select("image").display()
+# Write streaming data to bronze
+write_to_bronze_query = (
+    streaming_amazon_reviews_to_bronze
+    .writeStream
+    .format("delta")
+    .outputMode("append")
+    .trigger(once=True)
+    .option("checkpointLocation", checkpointLocation_bronze)
+    .option("path", path_bronze)
+)
 
 # COMMAND ----------
 
-spark.table("products.silver.amazon_reviews_silver").select("image").schema
+write_to_bronze_query.start().awaitTermination(timeout=10)
+
+# COMMAND ----------
+
+# Write streaming (offline) data to general silver
+
+write_to_silver_query = (
+    streaming_amazon_reviews_processed
+    .withColumn("image", split(regexp_replace(col("image"), r"[\[\]]", ""), ","))
+    .withColumn("overall", col("overall").cast("int"))
+    .withColumn("unixReviewTime", to_date(from_unixtime(col("unixReviewTime"))))
+    .withColumnRenamed("unixReviewTime", "date")
+    .withColumn("verified", when(col("verified") == "true", lit(True)).otherwise(lit(False)))
+    .withColumn("vote", col("vote").cast("int"))
+    .drop("style")
+    .filter(col("asin").isNotNull())
+    .dropDuplicates()
+    .writeStream
+    .format("delta")
+    .outputMode("append")
+    .trigger(once=True)
+    .option("checkpointLocation", checkpointLocation_silver)
+    .option("path", path_silver)
+)
+
+# COMMAND ----------
+
+spark.read.format("delta").load(path_silver).count()
+
+# COMMAND ----------
+
+write_to_silver_query.start().awaitTermination(timeout=10)
+
+# COMMAND ----------
+
+spark.read.format("delta").load(path_silver).count()
+
+# COMMAND ----------
+
+categories = spark.table("products.silver.amazon_categories_selected")
+
+# COMMAND ----------
+
+categories.count()
+
+# COMMAND ----------
+
+categories.display()
+
+# COMMAND ----------
+
+# Write streaming data to selected silver
+
+write_to_selected_silver_process = (
+    streaming_amazon_reviews_processed   
+    .withColumn("image", split(regexp_replace(col("image"), r"[\[\]]", ""), ","))
+    .withColumn("overall", col("overall").cast("int"))
+    .withColumn("unixReviewTime", to_date(from_unixtime(col("unixReviewTime"))))
+    .withColumnRenamed("unixReviewTime", "date")
+    .withColumn("verified", when(col("verified") == "true", lit(True)).otherwise(lit(False)))
+    .withColumn("vote", col("vote").cast("int"))
+    .drop("style")
+    .dropDuplicates()
+    .join(categories, on="asin", how="left_outer")
+    .filter(col("main_category").isNotNull())
+)
+
+# COMMAND ----------
+
+write_to_selected_silver_process.display()
+
+# COMMAND ----------
+
+write_to_selected_silver_query = (
+    write_to_selected_silver_process
+    .drop("main_category")
+    .writeStream
+    .format("delta")
+    .outputMode("append")
+    .trigger(once=True)
+    .option("checkpointLocation", checkpointLocation_selected_silver)
+    .option("path", path_selected_silver)
+)
+
+# COMMAND ----------
+
+spark.read.format("delta").load(path_selected_silver).count()
+
+# COMMAND ----------
+
+# spark.read.format("delta").load(path_selected_silver).printSchema()
+
+# COMMAND ----------
+
+write_to_selected_silver_query.start().awaitTermination(timeout=10)
+
+# COMMAND ----------
+
+spark.read.format("delta").load(path_selected_silver).count()
