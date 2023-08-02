@@ -154,7 +154,3 @@ BRONZE_BUCKET_NAME
 # COMMAND ----------
 
 bronze.write.format("delta").mode("overwrite").option("mergeSchema", "true").option("delta.columnMapping.mode", "name").saveAsTable("products.bronze.amazon_metadata_bronze", path = BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta")
-
-# COMMAND ----------
-
-

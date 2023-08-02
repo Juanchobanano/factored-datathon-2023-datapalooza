@@ -7,10 +7,6 @@ silver.columns
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 silver_reviews = spark.table("products.silver.amazon_reviews_silver")
 silver_metadata = spark.table("products.silver.amazon_metadata_silver")
 
@@ -98,4 +94,3 @@ silver_reviews.count()
 
 # STREAMLIT 
 # Alguien que se dedique a esto
-

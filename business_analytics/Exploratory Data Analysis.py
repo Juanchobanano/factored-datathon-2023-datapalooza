@@ -40,7 +40,3 @@ aggregation.display()
 # COMMAND ----------
 
 aggregation.write.format("delta").saveAsTable("products.platinum.reviews_count_per_day", path = "s3://datapalooza-products-reviews-platinum/reviews_count_per_day.delta")
-
-# COMMAND ----------
-
-

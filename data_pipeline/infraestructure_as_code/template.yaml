@@ -1,0 +1,153 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: |
+  SAM template creating the infrastructure for Datapalooza's proposal for Hackathon Factored 2023 in the AWS Cloud
+Parameters:
+  #buckets
+  BucketRawName:
+    Type: String    
+    Default: datapalooza-products-reviews-raw
+  BucketBronzeName:
+    Type: String    
+    Default: datapalooza-products-reviews-bronze
+  BucketSilverName:
+    Type: String    
+    Default: datapalooza-products-reviews-silver
+  BucketGoldName:
+    Type: String    
+    Default: datapalooza-products-reviews-gold
+  BucketPlatinumName:
+    Type: String    
+    Default: datapalooza-products-reviews-platinum
+
+Resources:
+  # Raw
+  BucketRaw:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketRawName
+
+  BucketRawPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketRaw
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetBucketLocation'
+              - 's3:ListBucket'
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:PutObjectAcl'
+              - 's3:DeleteObject'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${BucketRaw}'
+              - !Sub 'arn:aws:s3:::${BucketRaw}/*'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:role/Databricks-S3-Access'
+  # Bronze
+  BucketBronze:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketBronzeName
+
+  BucketBronzePolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketBronze
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetBucketLocation'
+              - 's3:ListBucket'
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:PutObjectAcl'
+              - 's3:DeleteObject'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${BucketBronze}'
+              - !Sub 'arn:aws:s3:::${BucketBronze}/*'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:role/Databricks-S3-Access'
+  # Silver
+  BucketSilver:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketSilverName
+
+  BucketSilverPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketSilver
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetBucketLocation'
+              - 's3:ListBucket'
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:PutObjectAcl'
+              - 's3:DeleteObject'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${BucketSilver}'
+              - !Sub 'arn:aws:s3:::${BucketSilver}/*'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:role/Databricks-S3-Access'
+  # Gold
+  BucketGold:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketGoldName
+
+  BucketGoldPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketGold
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetBucketLocation'
+              - 's3:ListBucket'
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:PutObjectAcl'
+              - 's3:DeleteObject'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${BucketGold}'
+              - !Sub 'arn:aws:s3:::${BucketGold}/*'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:role/Databricks-S3-Access'
+  # Platinum
+  BucketPlatinum:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketPlatinumName
+
+  BucketPlatinumPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketPlatinum
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetBucketLocation'
+              - 's3:ListBucket'
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:PutObjectAcl'
+              - 's3:DeleteObject'
+            Effect: Allow
+            Resource:
+              - !Sub 'arn:aws:s3:::${BucketPlatinum}'
+              - !Sub 'arn:aws:s3:::${BucketPlatinum}/*'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:role/Databricks-S3-Access'
