@@ -15,6 +15,7 @@ import pyspark.sql.functions as f
 from bs4 import BeautifulSoup
 from functools import wraps
 import re
+import tqdm
 from pyspark.sql.window import Window
 
 # COMMAND ----------
@@ -183,8 +184,8 @@ import tqdm
 partition = Window.orderBy(f.lit("A"))
 select_columns = ["asin", "title", "brand", "main_category", "category", "description", "feature", "mean_price", "rank", "also_buy", "also_view", "similar_items", "image", "source", "timestamp_ingested"]
 
-#counter = 1
-for file_ in tqdm.tqdm(dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta/")[95:]):
+counter = 134
+for file_ in tqdm.tqdm(dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta/")[134:]):
     print(f"Processing batch {file_} ... with counter {counter}")
     table = (
         spark.read.format("parquet").load(file_.path + "*")
@@ -254,7 +255,7 @@ for file_ in tqdm.tqdm(dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bron
 
 # COMMAND ----------
 
-dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta/")[95:]
+dbutils.fs.ls(BRONZE_BUCKET_NAME + "/amazon_metadata_bronze.delta/")[134:]
 
 # COMMAND ----------
 
