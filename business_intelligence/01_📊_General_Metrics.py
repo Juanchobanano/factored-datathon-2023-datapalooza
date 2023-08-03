@@ -15,19 +15,18 @@ data_list = [
     {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'count_reviews_per_overall'},
     {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'count_reviews_per_product_per_category'},
     {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'count_similar_products_between_categories'},
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'count_verified_reviews_per_category'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'distribution_of_description'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'distrobution_images'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'mean_ratings_per_asin'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'overall_distribution_per_product'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'price_comparison_between_categories'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'similar_items_per_asin'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'total_products_per_brand'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'total_products_per_category'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'total_reviews_per_reviewerid'}
-    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'verified_distribution'}
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'count_verified_reviews_per_category'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'distribution_of_description'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'distrobution_images'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'mean_ratings_per_asin'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'overall_distribution_per_product'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'price_comparison_between_categories'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'similar_items_per_asin'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'total_products_per_brand'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'total_products_per_category'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'total_reviews_per_reviewerid'},
+    {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'verified_distribution'},
     {'share': 'share__products_bi', 'schema': 'platinum', 'table': 'vote_distribution'}
-
 ]
 
 data = load_multiple_data(data_list)
