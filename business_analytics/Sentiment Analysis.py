@@ -69,10 +69,6 @@ silver_reviews.write.format("delta").option("overwriteSchema", "true").mode("ove
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 spark.table("products.silver.amazon_reviews_silver").count()
 
 # COMMAND ----------
@@ -103,10 +99,6 @@ info = pandas_df.to_dict("records")
 for i in range(len(info)):
     print(data)
     break
-
-# COMMAND ----------
-
-
 
 # COMMAND ----------
 
@@ -346,7 +338,3 @@ similarities_first
 # COMMAND ----------
 
 embeddings[0:1].shape
-
-# COMMAND ----------
-
-

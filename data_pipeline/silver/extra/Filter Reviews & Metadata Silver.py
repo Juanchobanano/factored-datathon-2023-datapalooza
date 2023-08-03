@@ -174,13 +174,12 @@ selected_reviews.count()
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 silver_metadata.display()
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## We are done!
+silver_metadata.groupBy("main_category").count().display()
+
+# COMMAND ----------
+
+silver_reviews.display()

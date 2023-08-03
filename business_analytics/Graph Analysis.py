@@ -152,16 +152,12 @@ graph = (
 
 # COMMAND ----------
 
-graph.display()
+
 
 # COMMAND ----------
 
-graph.write.format("delta").saveAsTable("products.gold.products_graph", path = "s3://datapalooza-products-reviews-gold/products_graph.delta")
-
-# COMMAND ----------
-
-graph.groupBy("label").count().display()
-
+import pyspark.sql.functions as f
+silver_metadata.groupBy(f.col("main_category")).count().display()
 
 # COMMAND ----------
 
