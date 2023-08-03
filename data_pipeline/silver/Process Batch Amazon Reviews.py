@@ -1,6 +1,8 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Process Amazon Reviews
+# MAGIC
+# MAGIC ### Dependencies: Process Batch Amazon Metadata
 
 # COMMAND ----------
 
@@ -37,21 +39,37 @@ udf_process_array_images = f.udf(lambda z: process_array_images(z), ArrayType(St
 # COMMAND ----------
 
 # DBTITLE 1,Transform data
+select_columns = ["asin", "category", "image", "overall", "reviewerID", "reviewerName", "reviewText", "summary", "date", "verified", 
+                  "vote", "source", "timestamp_ingested", "reviewID"]
+
 (
     spark.table("products.bronze.amazon_reviews")
+    .filter(f.col("asin").isNotNull())
     .withColumn("image", udf_process_array_images(f.col("image")))
     .withColumn("overall", f.col("overall").cast("int"))
     .withColumn("unixReviewTime", f.to_date(f.from_unixtime(f.col("unixReviewTime"))))
     .withColumnRenamed("unixReviewTime", "date")
+    .filter(f.col('date') >= '2017-01-01') # Only consider reviews after 2017-01-01
     .withColumn("verified", f.when(f.col("verified") == "true", f.lit(True)).otherwise(f.lit(False)))
     .withColumn("vote", f.col("vote").cast("int"))
+    .withColumn("concat", f.concat(f.col("asin"), f.col("reviewerID"), f.col("reviewText"), f.col("date")))
+    .withColumn("reviewID", f.sha1(f.col("concat")))
+    .dropDuplicates(["reviewID"])
+    .drop("concat")
     .drop("style")
-    .filter(f.col("asin").isNotNull())
+    .select(select_columns)
+    .join(
+        spark.table("products.silver.amazon_categories_selected"), 
+        on = ["asin"], 
+        how = "inner"
+    )
+    .withColumnRenamed("main_category", "category")
+    .select(reorder_columns)
     .write
     .format("delta")
     .saveAsTable(
-        "products.silver.amazon_reviews", 
-        path = f"{SILVER_BUCKET_NAME}/amazon_reviews.delta"
+        "products.silver.amazon_reviews_selected", 
+        path = f"{SILVER_BUCKET_NAME}/amazon_reviews_selected.delta"
     )
 )
 
@@ -62,24 +80,8 @@ udf_process_array_images = f.udf(lambda z: process_array_images(z), ArrayType(St
 
 # COMMAND ----------
 
-silver = spark.table("products.silver.amazon_reviews")
+silver = spark.table("products.silver.amazon_reviews_selected")
 dbutils.data.summarize(silver)
-
-# COMMAND ----------
-
-silver = spark.table("products.silver.amazon_reviews").withColumn("source", f.lit("batch"))
-silver.display()
-
-# COMMAND ----------
-
-silver = spark.table("products.silver.amazon_reviews") #.withColumn("source", f.lit("batch"))
-silver = silver.withColumn("timestamp_ingested", f.lit("2023-07-26 00:00:00"))
-silver = silver.withColumn("timestamp_ingested", f.col("timestamp_ingested").cast("timestamp"))
-silver.display()
-
-# COMMAND ----------
-
-silver.write.format("delta").mode("overwrite").option("mergeSchema", "true").saveAsTable("products.silver.amazon_reviews_silver",  path = f"{SILVER_BUCKET_NAME}/amazon_reviews_silver.delta")
 
 # COMMAND ----------
 

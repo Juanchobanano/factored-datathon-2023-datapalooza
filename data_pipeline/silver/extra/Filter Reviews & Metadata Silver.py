@@ -1,20 +1,17 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC # Filter Reviews and Metadata
+
+# COMMAND ----------
+
+# DBTITLE 1,Import libraries
 import pyspark.sql.functions as f
 
 # COMMAND ----------
 
+# DBTITLE 1,Load silver tables
 silver_metadata =  spark.table("products.silver.amazon_metadata_silver")
 silver_reviews = spark.table("products.silver.amazon_reviews_silver")
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC
-
-# COMMAND ----------
-
-# MAGIC %sql 
-# MAGIC DESCRIBE TABLE products.silver.amazon_metadata_silver;
 
 # COMMAND ----------
 
@@ -185,12 +182,5 @@ silver_metadata.display()
 
 # COMMAND ----------
 
-silver_metadata.groupBy("main_category").count().display()
-
-# COMMAND ----------
-
-silver_reviews.display()
-
-# COMMAND ----------
-
-
+# MAGIC %md
+# MAGIC ## We are done!
