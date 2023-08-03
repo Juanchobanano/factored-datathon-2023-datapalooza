@@ -4,11 +4,38 @@
 
 # COMMAND ----------
 
+platinum_bucket = "s3://datapalooza-products-reviews-platinum"
+
+# COMMAND ----------
+
+def save_metric(name):    
+    (
+        _sqldf
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .option("overwriteSchema", "true")
+        .saveAsTable(
+            name = f"products.platinum.{name}",
+            path = f"{platinum_bucket}/{name}.delta"
+        )
+    )
+    print(f"Succesfully writed table:")
+    print(f"\tproducts.platinum.{name}")
+    print(f"\t{platinum_bucket}/{name}.delta")
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC -- Recuento de reseñas por calificación (overall)
 # MAGIC SELECT overall, COUNT(*) AS count
 # MAGIC FROM products.silver.amazon_reviews_selected
-# MAGIC GROUP BY overall;
+# MAGIC GROUP BY overall
+
+# COMMAND ----------
+
+name = "count_reviews_per_overall"
+save_metric(name)
 
 # COMMAND ----------
 
@@ -17,6 +44,11 @@
 # MAGIC SELECT category, COUNT(*) AS count
 # MAGIC FROM products.silver.amazon_reviews_selected
 # MAGIC GROUP BY category;
+
+# COMMAND ----------
+
+name = "count_reviews_per_category"
+save_metric(name)
 
 # COMMAND ----------
 
@@ -33,6 +65,11 @@
 
 # COMMAND ----------
 
+name = "verified_distribution"
+save_metric(name)
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC -- Distribución de reseñas con y sin voto
 # MAGIC SELECT 
@@ -46,15 +83,21 @@
 
 # COMMAND ----------
 
+name = "vote_distribution"
+save_metric(name)
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC -- Promedio de calificaciones por producto (ASIN).
-# MAGIC SELECT asin, AVG(overall) AS avg_rating
+# MAGIC SELECT asin, AVG(overall) AS avg_rating, count(asin) AS count
 # MAGIC FROM products.silver.amazon_reviews_selected
 # MAGIC GROUP BY asin;
 
 # COMMAND ----------
 
-#TODO: incluir el número de reseñas en la métrica anterior
+name =  "mean_ratings_per_asin"
+save_metric(name)
 
 # COMMAND ----------
 
@@ -66,11 +109,21 @@
 
 # COMMAND ----------
 
+name = "total_reviews_per_reviewerid"
+save_metric(name)
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC -- Recuento de reseñas por categoría y calificación (overall)
 # MAGIC SELECT category, overall, COUNT(*) AS count
 # MAGIC FROM products.silver.amazon_reviews_selected
 # MAGIC GROUP BY category, overall;
+
+# COMMAND ----------
+
+name = "count_reviews_per_Category_and_overall"
+save_metric(name)
 
 # COMMAND ----------
 
@@ -81,6 +134,11 @@
 # MAGIC        SUM(CASE WHEN verified = 'false' THEN 1 ELSE 0 END) AS unverified_count
 # MAGIC FROM products.silver.amazon_reviews_selected
 # MAGIC GROUP BY category;
+
+# COMMAND ----------
+
+name = "count_verified_reviews_per_category"
+save_metric(name)
 
 # COMMAND ----------
 
@@ -98,6 +156,11 @@
 
 # COMMAND ----------
 
+name = "avg_words_per_review"
+save_metric(name)
+
+# COMMAND ----------
+
 # MAGIC %md
 # MAGIC # Metadata Metrics
 
@@ -108,6 +171,11 @@
 # MAGIC SELECT main_category, COUNT(*) AS total_products
 # MAGIC FROM products.silver.amazon_metadata_silver_selected
 # MAGIC GROUP BY main_category;
+
+# COMMAND ----------
+
+name =  "total_products_per_category"
+save_metric(name)
 
 # COMMAND ----------
 
@@ -124,6 +192,11 @@
 # MAGIC SELECT brand, COUNT(*) AS total_products
 # MAGIC FROM products.silver.amazon_metadata_silver_selected
 # MAGIC GROUP BY brand;
+
+# COMMAND ----------
+
+name = "total_products_per_brand"
+save_metric(name)
 
 # COMMAND ----------
 
@@ -178,6 +251,11 @@
 
 # COMMAND ----------
 
+name = "distribution_of_description"
+save_metric(name)
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC -- Distribución de productos con y sin imagen
 # MAGIC SELECT 
@@ -191,11 +269,20 @@
 
 # COMMAND ----------
 
+name = "distrobution_images"
+save_metric(name)
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC -- Cantidad de productos ingresados por fecha de ingreso (timestamp_ingested)
 # MAGIC SELECT DATE(timestamp_ingested) AS ingested_date, COUNT(*) AS count
 # MAGIC FROM products.silver.amazon_metadata_silver_selected
 # MAGIC GROUP BY ingested_date;
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -212,6 +299,11 @@
 # MAGIC SELECT asin, COUNT(similar_items) AS similar_items_count
 # MAGIC FROM products.silver.amazon_metadata_silver_selected
 # MAGIC GROUP BY asin;
+
+# COMMAND ----------
+
+name = "similar_items_per_asin"
+save_metric(name)
 
 # COMMAND ----------
 
@@ -240,6 +332,11 @@ spark.table("products.silver.amazon_reviews_selected")
 
 # COMMAND ----------
 
+name = "overall_distribution_per_product"
+save_metric(name)
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC -- Recuento de Reviews por Producto y Categoría
 # MAGIC SELECT 
@@ -252,21 +349,8 @@ spark.table("products.silver.amazon_reviews_selected")
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC -- Análisis de Palabras Comunes en Descripciones de Productos por Categoría
-# MAGIC SELECT 
-# MAGIC     t1.main_category AS category,
-# MAGIC     word, 
-# MAGIC     COUNT(*) AS count
-# MAGIC FROM products.silver.amazon_metadata_silver_selected t1
-# MAGIC JOIN products.silver.amazon_reviews_selected t2 ON t1.asin = t2.asin
-# MAGIC CROSS JOIN (
-# MAGIC     SELECT SPLIT(t1.description, ' ') AS words
-# MAGIC     FROM products.silver.amazon_metadata_silver_selected t1
-# MAGIC ) words_table
-# MAGIC LATERAL VIEW explode(words_table.words) w AS word
-# MAGIC GROUP BY t1.main_category, word
-# MAGIC ORDER BY t1.main_category, count DESC;
+name = "count_reviews_per_product_per_category"
+save_metric(name)
 
 # COMMAND ----------
 
@@ -281,6 +365,11 @@ spark.table("products.silver.amazon_reviews_selected")
 
 # COMMAND ----------
 
+name = "price_comparison_between_categories"
+save_metric(name)
+
+# COMMAND ----------
+
 # MAGIC %sql
 # MAGIC -- Cantidad de Productos Similares entre Video Juegos y Software
 # MAGIC SELECT 
@@ -290,3 +379,12 @@ spark.table("products.silver.amazon_reviews_selected")
 # MAGIC FROM products.silver.amazon_metadata_silver_selected t1
 # MAGIC JOIN products.silver.amazon_reviews_selected t2 ON t1.asin = t2.asin
 # MAGIC GROUP BY t1.main_category;
+
+# COMMAND ----------
+
+name = "count_similar_products_between_Categories"
+save_metric(name)
+
+# COMMAND ----------
+
+
