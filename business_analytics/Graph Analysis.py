@@ -29,10 +29,6 @@ silver_reviews.join(
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 import pyspark.sql.functions as f
 silver_metadata.groupBy(f.col("main_category")).count().display()
 

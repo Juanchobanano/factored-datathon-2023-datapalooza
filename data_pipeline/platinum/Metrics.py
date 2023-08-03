@@ -54,7 +54,7 @@
 
 # COMMAND ----------
 
-#TODO: incluir el número de reseñas
+#TODO: incluir el número de reseñas en la métrica anterior
 
 # COMMAND ----------
 
