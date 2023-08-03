@@ -27,7 +27,13 @@ def save_metric(name):
 # COMMAND ----------
 
 # MAGIC %sql
+# MAGIC USE CATALOG products;
+
+# COMMAND ----------
+
+# MAGIC %sql
 # MAGIC -- Recuento de reseñas por calificación (overall)
+
 # MAGIC SELECT overall, COUNT(*) AS count
 # MAGIC FROM products.silver.amazon_reviews_selected
 # MAGIC GROUP BY overall
