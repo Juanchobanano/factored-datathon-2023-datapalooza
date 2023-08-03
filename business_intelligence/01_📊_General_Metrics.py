@@ -68,7 +68,7 @@ data = load_multiple_data(data_list)
     "total_products_per_category",
     "total_reviews_per_reviewerid",
     "verified_distribution",
-    "vote_distribution "
+    "vote_distribution"
     )(data)
 
 st.title(page_title)
