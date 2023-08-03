@@ -76,9 +76,7 @@ test = "offline"
 checkpointLocation_bronze = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_bronze"
 checkpointLocation_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_silver"
 checkpointLocation_selected_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_selected_silver"
-# path_bronze = f"{BRONZE_BUCKET_NAME}/streaming/{test}/amazon_reviews_bronze.delta"
 path_bronze = "s3://datapalooza-products-reviews-bronze/amazon_reviews_bronze.delta"
-# path_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/amazon_reviews_silver.delta"
 path_silver = "s3://datapalooza-products-reviews-silver/amazon_reviews_silver.delta"
 path_selected_silver = "s3://datapalooza-products-reviews-silver/amazon_reviews_selected"
 
@@ -132,11 +130,14 @@ write_to_silver_query = (
     .withColumn("overall", col("overall").cast("int"))
     .withColumn("unixReviewTime", to_date(from_unixtime(col("unixReviewTime"))))
     .withColumnRenamed("unixReviewTime", "date")
+    .filter(col("date") >= "2017-01-01")
     .withColumn("verified", when(col("verified") == "true", lit(True)).otherwise(lit(False)))
     .withColumn("vote", col("vote").cast("int"))
+    .withColumn("concat", concat(col("asin"), col("reviewerID"), col("reviewText"), col("date")))
     .drop("style")
+    .withColumn("reviewID", sha1(col("concat")))
     .filter(col("asin").isNotNull())
-    .dropDuplicates()
+    .dropDuplicates(["reviewID"])
     .writeStream
     .format("delta")
     .outputMode("append")
