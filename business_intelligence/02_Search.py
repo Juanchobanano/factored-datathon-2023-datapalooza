@@ -15,11 +15,33 @@ st.set_page_config(page_title="Products Search", page_icon="")
 products_graph = pd.read_parquet("./data/graph.parquet")
 amazon_reviews = pd.read_parquet("./data/amazon_reviews.parquet")
 amazon_metadata = pd.read_parquet("./data/amazon_metadata.parquet")
+degree_centrality = pd.read_parquet("./data/degree_centrality.parquet")
+betweennes_centrality = pd.read_parquet("./data/betweenness_centrality.parquet")
 
 # Main title
 st.title("🔍 Products Search")
 
 product_title = st.text_input("Search products by title", value = "Nintendo 64")
+
+# SUGERIRLE AL USUARIO LOS PRODUCTOS MÁS IMPORTANTES
+# DE ACUERDO AL DEGREE CENTRALITY
+
+#- producto 1, degree centlriaty: 123,  Buscar
+#. producto 2, degree_centrality: 123,  Buscar
+
+# DAVID ----
+# Se hace la búsqueda en Pinecone
+# Se retornan los vecinos
+# Se le sugiere al usuario
+# El usuario selecciona una opción (titulos de los productos)
+# => ID de un producto
+# El usuario le da click a "buscar" (toca implementar ese boton)
+
+#boton = st.button("Search")
+#if boton:
+
+# 
+
 
 # Searh bar
 product = "B00005YDIC"
@@ -60,10 +82,14 @@ st.subheader("🏘️ Product Neighborhood")
 # Show degree and betweenness centrality metrics
 col1, col2 = st.columns(2)
 with col1: 
-    st.metric(label = "Product Local Degree Centrality (from 0 to 1)", value = 0.7)
+    value = degree_centrality[degree_centrality.node == product]["degree_centrality"].values[0]
+    value = round(value, 3)
+    st.metric(label = "Product Local Degree Centrality (from 0 to 1)", value = value)
     st.caption("Measure how popular a product is, helping companies to allocate marketing budgets more effectively and focus on products with high customer engagement.")
 with col2: 
-    st.metric(label = "Product Local Betweenness Centrality (from 0 to 1)", value = 0.6)
+    value = betweennes_centrality[betweennes_centrality.node == product]["betweenes_centrality_normalized"].values[0]
+    value = round(value, 3)
+    st.metric(label = "Product Local Betweenness Centrality (from 0 to 1)", value = value)
     st.caption("Measures how influential a product is, helping companies target their marketing efforts more effectively. Collaborating with influential brands or featuring influential products can boost exposure and sales.")
 
 # Get graph
