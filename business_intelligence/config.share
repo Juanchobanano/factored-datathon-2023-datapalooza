@@ -1,1 +1,1 @@
-{"shareCredentialsVersion":1,"bearerToken":"_FdOeFMeYOSPXTE25v5VJKL8F8NggdrWGX_HbNu8x3CTdWjR47wN0Ffh9oqEcejs","endpoint":"https://nvirginia.cloud.databricks.com/api/2.0/delta-sharing/metastores/bea5b0c1-9f25-414a-aa42-ae76101d550d","expirationTime":"9999-12-31T23:59:59.999Z"}
+{"shareCredentialsVersion": 1, "bearerToken": "pyAbvJOzsqSe_LDz8fvrpi6fLU8XaOhPg1udcnVbBS_WOG6jk9W1SAPVy1amSQiN", "endpoint": "https://nvirginia.cloud.databricks.com/api/2.0/delta-sharing/metastores/bea5b0c1-9f25-414a-aa42-ae76101d550d", "expirationTime": "9999-12-31T23:59:59.999Z"}
