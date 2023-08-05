@@ -104,126 +104,66 @@ values = [
 labels = ["Sofware 🖥️", "Video Games 🎮"]
 # Colores personalizados para las barras
 
+
+
 #-----------------------------------------------------------------
 
-st.write("total_products_per_category")
+fig_pie = px.pie(total_products_per_brand.head(5), values='total_products', names='brand', title='Total Products per Brand')
+fig_bar = go.Figure(
+    data=[go.Bar(x=labels, y=[values[0], values[1]], marker=dict(color=['blue','green']))],
+    layout=go.Layout(
+        title="Total Products per Category",
+        xaxis=dict(title="Category"),
+        yaxis=dict(title="Total Products")
+    )
+)
+col1, col2 = st.columns(2)
 
-# create three columns
-kpi1, kpi2= st.columns(2)
-# fill in those three columns with respective metrics or KPIs
-kpi1.metric(
-    label=labels[0],
-    value=values[0],
-)
-kpi2.metric(
-    label=labels[1],
-    value=values[1],
-)
-# Crear la figura de la gráfica de barras
-fig = go.Figure([go.Bar(x=labels, y=[values[0], values[1]], marker=dict(color=['blue','green']))])
-# Actualizar el título y el nombre de los ejes
-fig.update_layout(
-    xaxis_title="Category",
-    yaxis_title="Total Products"
-)
-st.plotly_chart(fig, use_container_width=True)
+col1.plotly_chart(fig_bar, use_container_width=True)
+col2.plotly_chart(fig_pie, use_container_width=True )
 
-#--------------------------------------------------------------------------------------------------------------------
-st.write("count_reviews_per_category")
-# create three columns
-kpi1, kpi2= st.columns(2)
-# fill in those three columns with respective metrics or KPIs
-kpi1.metric(
-    label=labels[0],
-    value=values[2],
-)
-kpi2.metric(
-    label=labels[1],
-    value=values[3],
-)
-# Crear la figura de la gráfica de barras
-fig = go.Figure([go.Bar(x=labels, y=[values[2], values[3]], marker=dict(color=['yellow','pink']))])
-# Actualizar el título y el nombre de los ejes
-fig.update_layout(
-    xaxis_title="Category",
-    yaxis_title="Total Reviews"
-)
-st.plotly_chart(fig, use_container_width=True)
-#--------------------------------------------------------------------------------------------------------------------
-st.write("price_comparison_between_categories")
-
-# create three columns
-kpi1, kpi2= st.columns(2)
-# fill in those three columns with respective metrics or KPIs
-kpi1.metric(
-    label=labels[0],
-    value=round(values[4],2),
-)
-kpi2.metric(
-    label=labels[1],
-    value=round(values[5],2),
-)
-# Crear la figura de la gráfica de barras
-fig = go.Figure([go.Bar(x=labels, y=[values[4], values[5]], marker=dict(color=['orange','purple']))])
-# Actualizar el título y el nombre de los ejes
-fig.update_layout(
-    xaxis_title="Category",
-    yaxis_title="Avg price"
-)
-st.plotly_chart(fig, use_container_width=True)
-#------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------
+st.text("mean_ratings_per_asin")
+fig_scatter = px.scatter(mean_ratings_per_asin, x='avg_rating', size='count', text='count',
+                 labels={'asin': 'ASIN', 'avg_rating': 'Average Rating'},
+                 title='Product Ranking by Average Rating')
 
 st.text("count_reviews_per_category_and_overall")
 # Create the Plotly bar chart
-fig = px.bar(count_reviews_per_category_and_overall, x='category', y='count', color='overall',
+fig_bar = px.bar(count_reviews_per_category_and_overall, x='category', y='count', color='overall',
              labels={'category': 'Category', 'count': 'Count', 'overall': 'Overall Rating'},
              title='Count of Reviews per Category and Overall Rating')
 
-# Display the chart using Streamlit
-st.plotly_chart(fig, use_container_width=True)
+
+col1, col2 = st.columns(2)
 
 
-#------------------------------------------------------------------------------------------
-st.text("count_reviews_per_overall")
-fig = px.bar(count_reviews_per_overall, x='overall', y='count',
+col1.plotly_chart(fig_bar, use_container_width=True)
+col2.plotly_chart(fig_scatter, use_container_width=True )
+
+#------------------------------------------------------------------------
+
+fig1 = go.Figure([go.Bar(x=labels, y=values, marker=dict(color=['orange', 'purple']))])
+
+# Actualizar el título y el nombre de los ejes
+fig1.update_layout(
+    title="Average Prices per Category",
+    xaxis_title="Category",
+    yaxis_title="Avg price"
+)
+
+fig2 = px.bar(count_reviews_per_overall, x='overall', y='count',
              labels={'overall': 'Overall Rating', 'count': 'Count'},
              title='Count of Reviews per Overall Rating')
 
-# Mostrar la gráfica
-st.plotly_chart(fig)
-#------------------------------------------------------------------------------------------
-st.text("count_similar_products_between_categories")
-# Crear la figura del gráfico de barras con Plotly Express
-fig = px.bar(count_similar_products_between_categories, x='category', y=['also_buy_count', 'also_view_count'],
+
+col1, col2 = st.columns(2)
+
+col1.plotly_chart(fig1, use_container_width=True)
+col2.plotly_chart(fig2, use_container_width=True )
+
+
+fig3 = px.bar(count_similar_products_between_categories, x='category', y=['also_buy_count', 'also_view_count'],
              labels={'category': 'Category', 'value': 'Count', 'variable': 'Type'},
              title='Also Buy and Also View Count per Category')
-
-# Mostrar la gráfica en Streamlit
-st.plotly_chart(fig)
-#------------------------------------------------------------------------------------------
-st.text("count_verified_reviews_per_category")
-
-# Crear la figura del gráfico de barras con Plotly Express
-fig = px.bar(count_verified_reviews_per_category, x='category', y=['verified_count', 'unverified_count'],
-             labels={'category': 'Category', 'value': 'Count', 'variable': 'Type'},
-             title='Verified and Unverified Count per Category')
-
-
-# Mostrar la gráfica en Streamlit
-st.plotly_chart(fig)
-
-#------------------------------------------------------------------
-st.text("mean_ratings_per_asin")
-fig = px.scatter(mean_ratings_per_asin, x='avg_rating', size='count', text='count',
-                 labels={'asin': 'ASIN', 'avg_rating': 'Average Rating'},
-                 title='Product Ranking by Average Rating')
-st.plotly_chart(fig, use_container_width=True)
-
-#------------------------------------------------------------------
-st.text("total_products_per_brand")
-fig = px.bar(total_products_per_brand.head(5), x='brand', y='total_products',
-             labels={'brand': 'Brand', 'total_products': 'Total Products'},
-             title='Total Products per Brand')
-st.plotly_chart(fig, use_container_width= True )
-
-
+st.plotly_chart(fig3, use_container_width=True)
