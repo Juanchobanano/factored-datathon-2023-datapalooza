@@ -12,7 +12,7 @@ import constants as ct
 
 
 # page title
-st.set_page_config(page_title="Product Search", page_icon="🔍")
+st.set_page_config(page_title="Product Search", page_icon="🔍", layout="wide")
 # load pinecone index
 pinecone.init(api_key=ct.PINECONE_API_KEY, environment=ct.PINECONE_ENVIRONMENT)
 index = pinecone.Index(ct.PINECONE_INDEX_NAME)
@@ -34,8 +34,8 @@ data_list = [
 data = load_multiple_data(data_list)
 (
     products_graph,
-    product_reviews,
-    product_metadata,
+    products_reviews,
+    products_metadata,
     degree_centrality,
     betweenness_centrality,
 ) = itemgetter(
@@ -75,8 +75,8 @@ with tab1:
         results_asin = [x["id"] for x in xc["matches"]] # Get ids of asins
 
         # Filter results metadata and reviews
-        results_asin_mask = product_metadata["asin"].isin(results_asin)
-        results_metadata = product_metadata[results_asin_mask].reset_index(drop=True).fillna("Not available")
+        results_asin_mask = products_metadata["asin"].isin(results_asin)
+        results_metadata = products_metadata[results_asin_mask].reset_index(drop=True).fillna("Not available")
 
         # Display query results
         options = list(results_metadata["title"].values)
@@ -104,10 +104,9 @@ with tab1:
                 price = round(float(price), 2)
             st.markdown(f"USD {price}")
 
-       
 
-        product_metadata = product_metadata[product_metadata.asin == product_asin]
-        product_reviews = product_reviews[product_reviews.asin == product_asin]
+        product_metadata = products_metadata[products_metadata.asin == product_asin]
+        product_reviews = products_reviews[products_reviews.asin == product_asin]
 
         # show additional product information
         st.subheader("📚 Additional Product Information")
@@ -237,15 +236,17 @@ with tab2:
     results_asin = list(degree_centrality.iloc[0:max_results]["node"].values)
 
     # Filter results metadata and reviews
-    results_asin_mask = product_metadata["asin"].isin(results_asin)
-    results_metadata = product_metadata[results_asin_mask].reset_index(drop=True).fillna("Not available")
+    print("results asin: ", results_asin)
+    results_asin_mask = products_metadata["asin"].isin(results_asin)
+    results_metadata = products_metadata[results_asin_mask].reset_index(drop=True).fillna("Not available")
+    print("results_metadata:", results_metadata)
 
     # Display query results
     options = list(results_metadata["title"].values)
     product_idx = st.selectbox(f"📊 Top {max_results} products", range(len(options)), format_func=lambda x: options[x], key = "bar2")
     
     # Get product asin
-    product_asin = results_metadata.iloc[product_idx]["asin"]
+    product_asin = results_metadata.loc[product_idx, "asin"]
     st.write(product_asin)
 
     # Product Information
@@ -253,24 +254,24 @@ with tab2:
     with col1:
         st.subheader("🏷️ Title")
         #title = results_metadata["title"].tolist()
-        title = results_metadata.iloc[product_idx]["title"] #.values[0]
+        title = results_metadata.loc[product_idx, "title"] #.values[0]
         st.markdown(title)
     with col2:
         st.subheader("🏢 Brand")
         #brand = results_metadata["brand"].tolist()
-        brand = results_metadata.iloc[product_idx]["brand"] #.values[0]
+        brand = results_metadata.loc[product_idx, "brand"] #.values[0]
         st.markdown(brand)
     with col3:
         st.subheader("💵 Mean Price")
-        price = results_metadata.iloc[product_idx]["mean_price"] #.values[0]
+        price = results_metadata.loc[product_idx, "mean_price"] #.values[0]
         if price != "Not available":
             price = round(float(price), 2)
         st.markdown(f"USD {price}")
 
     
 
-    product_metadata = product_metadata[product_metadata.asin == product_asin]
-    product_reviews = product_reviews[product_reviews.asin == product_asin]
+    product_metadata = products_metadata[products_metadata.asin == product_asin]
+    product_reviews = products_reviews[products_reviews.asin == product_asin]
 
     # show additional product information
     st.subheader("📚 Additional Product Information")
@@ -367,8 +368,8 @@ with tab2:
     ]
 
     config = Config(
-        width=750,  # 1024,
-        height=750,  # 750,
+        width=1024,  # 1024,
+        height=1024,  # 750,
         directed=True,
         physics=True,
         hierarchical=False,
