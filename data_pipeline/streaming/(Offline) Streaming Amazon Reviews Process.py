@@ -1,12 +1,10 @@
 # Databricks notebook source
-# import dlt
 from pyspark.sql.types import StructType, StructField, StringType, TimestampType, ArrayType
-from pyspark.sql.functions import decode, col, from_json, lit, length, to_date, from_unixtime, when, unix_timestamp, regexp_replace, split
+from pyspark.sql.functions import decode, col, from_json, lit, length, to_date, from_unixtime, when, unix_timestamp, regexp_replace, split, concat ,sha1
 
 # COMMAND ----------
 
-# Event Hubs configuration
-
+# DBTITLE 1,Event Hubs configuration
 EH_NAMESPACE                    = "factored-datathon"
 EH_NAME                         = "factored_datathon_amazon_reviews_4"
 
@@ -17,8 +15,7 @@ EH_CONN_STR                     = f"Endpoint=sb://{EH_NAMESPACE}.servicebus.wind
 
 # COMMAND ----------
 
-# Kafka Consumer configuration
-
+# DBTITLE 1,Kafka Consumer configuration
 KAFKA_OPTIONS = {
   "kafka.bootstrap.servers"  : f"{EH_NAMESPACE}.servicebus.windows.net:9093",
   "subscribe"                : EH_NAME,
@@ -72,22 +69,19 @@ schema = StructType(
 # COMMAND ----------
 
 BRONZE_BUCKET_NAME = "s3://datapalooza-products-reviews-bronze"
+SILVER_BUCKET_NAME = "s3://datapalooza-products-reviews-silver"
 test = "offline"
 checkpointLocation_bronze = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_bronze"
-checkpointLocation_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_silver"
-checkpointLocation_selected_silver = f"{BRONZE_BUCKET_NAME}/streaming/{test}/checkpointLocation_selected_silver"
-path_bronze = "s3://datapalooza-products-reviews-bronze/amazon_reviews_bronze.delta"
-path_silver = "s3://datapalooza-products-reviews-silver/amazon_reviews_silver.delta"
-path_selected_silver = "s3://datapalooza-products-reviews-silver/amazon_reviews_selected"
+checkpointLocation_silver = f"{SILVER_BUCKET_NAME}/streaming/{test}/checkpointLocation_silver"
+checkpointLocation_selected_silver = f"{SILVER_BUCKET_NAME}/streaming/{test}/checkpointLocation_selected_silver"
+path_bronze = f"{BRONZE_BUCKET_NAME}/amazon_reviews_bronze.delta"
+path_silver = f"{SILVER_BUCKET_NAME}/amazon_reviews_silver.delta"
+path_selected_silver = f"{SILVER_BUCKET_NAME}/amazon_reviews_selected"
 
 # COMMAND ----------
 
-print(f"checkpointLocation_bronze: {checkpointLocation_bronze}")
-print(f"checkpointLocation_silver: {checkpointLocation_silver}")
-print(f"checkpointLocation_selected_silver: {checkpointLocation_selected_silver}")
-print(f"path_bronze: {path_bronze}")
-print(f"path_silver: {path_silver}")
-print(f"path_selected_silver: {path_selected_silver}")
+# MAGIC %md 
+# MAGIC ### Streaming Data
 
 # COMMAND ----------
 
@@ -97,17 +91,20 @@ streaming_amazon_reviews_processed = (
     .withColumn("value", decode(col("value"), "utf-8"))
     .withColumn("data", from_json(col("value"), schema))
     .select("data.*", "timestamp")
-    .withColumn("unixReviewTime", unix_timestamp(col("timestamp")))
-    .withColumn("unixReviewTime", col("timestamp").cast(StringType()))    
     .withColumn("source", lit("streaming"))
     .withColumnRenamed("timestamp", "timestamp_ingested")
 )
 
 # COMMAND ----------
 
+# MAGIC %md 
+# MAGIC ### Write Streaming Data to Bronze
+
+# COMMAND ----------
+
 # Write streaming data to bronze
 write_to_bronze_query = (
-    streaming_amazon_reviews_to_bronze
+    streaming_amazon_reviews_processed
     .writeStream
     .format("delta")
     .outputMode("append")
@@ -122,22 +119,37 @@ write_to_bronze_query.start().awaitTermination(timeout=10)
 
 # COMMAND ----------
 
-# Write streaming (offline) data to general silver
+# MAGIC %md 
+# MAGIC ### Write Streaming Data to General Silver
 
-write_to_silver_query = (
+# COMMAND ----------
+
+streaming_amazon_reviews_silver = (
     streaming_amazon_reviews_processed
     .withColumn("image", split(regexp_replace(col("image"), r"[\[\]]", ""), ","))
     .withColumn("overall", col("overall").cast("int"))
-    .withColumn("unixReviewTime", to_date(from_unixtime(col("unixReviewTime"))))
-    .withColumnRenamed("unixReviewTime", "date")
-    .filter(col("date") >= "2017-01-01")
     .withColumn("verified", when(col("verified") == "true", lit(True)).otherwise(lit(False)))
     .withColumn("vote", col("vote").cast("int"))
-    .withColumn("concat", concat(col("asin"), col("reviewerID"), col("reviewText"), col("date")))
     .drop("style")
+    .drop("unixReviewTime")
+    .withColumn("date", to_date(col("timestamp_ingested")))
+    .filter(col("date") >= "2017-01-01")
+    .withColumn("concat", concat(col("asin"), col("reviewerID"), col("reviewText"), col("date")))   
     .withColumn("reviewID", sha1(col("concat")))
+    .drop("concat")
     .filter(col("asin").isNotNull())
     .dropDuplicates(["reviewID"])
+    #falta el category
+)
+
+# COMMAND ----------
+
+streaming_amazon_reviews_silver.groupBy().count().display()
+
+# COMMAND ----------
+
+write_to_silver_query = ( 
+    streaming_amazon_reviews_silver
     .writeStream
     .format("delta")
     .outputMode("append")
@@ -148,15 +160,26 @@ write_to_silver_query = (
 
 # COMMAND ----------
 
-spark.read.format("delta").load(path_silver).count()
+initial_silver_count = spark.read.format("delta").load(path_silver).count()
+print(initial_silver_count)
 
 # COMMAND ----------
 
-write_to_silver_query.start().awaitTermination(timeout=10)
+write_to_silver_query.start().awaitTermination()
 
 # COMMAND ----------
 
-spark.read.format("delta").load(path_silver).count()
+final_silver_count = spark.read.format("delta").load(path_silver).count()
+print(final_silver_count)
+
+# COMMAND ----------
+
+final_silver_count - initial_silver_count
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC ### Write Streaming Data to Selected Silver
 
 # COMMAND ----------
 
@@ -164,39 +187,24 @@ categories = spark.table("products.silver.amazon_categories_selected")
 
 # COMMAND ----------
 
-categories.count()
-
-# COMMAND ----------
-
-categories.display()
-
-# COMMAND ----------
-
-# Write streaming data to selected silver
-
-write_to_selected_silver_process = (
-    streaming_amazon_reviews_processed   
-    .withColumn("image", split(regexp_replace(col("image"), r"[\[\]]", ""), ","))
-    .withColumn("overall", col("overall").cast("int"))
-    .withColumn("unixReviewTime", to_date(from_unixtime(col("unixReviewTime"))))
-    .withColumnRenamed("unixReviewTime", "date")
-    .withColumn("verified", when(col("verified") == "true", lit(True)).otherwise(lit(False)))
-    .withColumn("vote", col("vote").cast("int"))
-    .drop("style")
-    .dropDuplicates()
-    .join(categories, on="asin", how="left_outer")
-    .filter(col("main_category").isNotNull())
+write_to_selected_silver_query = ( 
+    streaming_amazon_reviews_silver
+    .join(categories, on="asin", how="inner")
+    .withColumnRenamed("main_category", "category")
 )
 
 # COMMAND ----------
 
-write_to_selected_silver_process.display()
+write_to_selected_silver_query.groupBy().count().display()
 
 # COMMAND ----------
 
-write_to_selected_silver_query = (
-    write_to_selected_silver_process
-    .drop("main_category")
+df = spark.read.format("delta").load(path_selected_silver)
+
+# COMMAND ----------
+
+query = (
+    write_to_selected_silver_query
     .writeStream
     .format("delta")
     .outputMode("append")
@@ -207,16 +215,9 @@ write_to_selected_silver_query = (
 
 # COMMAND ----------
 
-spark.read.format("delta").load(path_selected_silver).count()
+query.start().awaitTermination()
 
 # COMMAND ----------
 
-# spark.read.format("delta").load(path_selected_silver).printSchema()
-
-# COMMAND ----------
-
-write_to_selected_silver_query.start().awaitTermination(timeout=10)
-
-# COMMAND ----------
-
-spark.read.format("delta").load(path_selected_silver).count()
+# MAGIC %md 
+# MAGIC # Real time Analytics
