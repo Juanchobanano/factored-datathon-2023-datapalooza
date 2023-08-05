@@ -60,3 +60,7 @@ sentiment_df = (
         path = "s3://datapalooza-products-reviews-gold/sentiment_selected.delta"
     )
 )
+
+# COMMAND ----------
+
+
