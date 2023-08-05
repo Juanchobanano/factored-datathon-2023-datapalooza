@@ -86,8 +86,9 @@ data = load_multiple_data(data_list)
 #count_verified_reviews_per_category
 #count_reviews_per_category
 
-st.title("Unleash the Magic of Data Visualization: An Exciting Journey Awaits!")
-st.write("Welcome to our platform for data visualization and analysis of products. Here you will find detailed data presented visually and accessibly, enabling you to conduct informed analyses. Explore our interactive visualizations to understand product behavior in the market and customer preferences. Whether you're a seller, entrepreneur, or simply someone interested in products, we provide the necessary information for making successful decisions. Empower your sales and maximize your success with our data! Start your data analysis journey now.")
+st.title('📈 Understanding the Importance of Knowing Your Data Product for Increased Sales')
+st.markdown('## 📊 Data-Driven Decision Making')
+st.write("Understanding your data product thoroughly is crucial for driving sales and business success in today's era. The market is increasingly moving towards a data-driven approach, and knowing how your customers perceive your product and their behavior in relation to it is a key factor in making informed strategic decisions. By comprehending the data behind your product, such as customer preferences, purchasing trends, and customer satisfaction, you can identify improvement opportunities and develop effective strategies to increase sales and enhance the customer experience.")
 
 
 # Selector para cambiar entre DataFrames
@@ -123,25 +124,68 @@ col1.plotly_chart(fig_bar, use_container_width=True)
 col2.plotly_chart(fig_pie, use_container_width=True )
 
 #-------------------------------------------------------------------
-st.text("mean_ratings_per_asin")
-fig_scatter = px.scatter(mean_ratings_per_asin, x='avg_rating', size='count', text='count',
-                 labels={'asin': 'ASIN', 'avg_rating': 'Average Rating'},
-                 title='Product Ranking by Average Rating')
+st.markdown('## 🌟 The Impact of Customer Reviews')
+st.write("One essential metric every business owner should be aware of is the number of reviews their product receives. Customer reviews have a significant impact on the purchasing decisions of other potential buyers. The more positive reviews your product has, the more confidence it instills in consumers, making them more likely to make a purchase. Moreover, reviews can also provide valuable insights into which aspects of your product are appreciated by customers and which areas may need improvement. Knowing this information will allow you to adjust your marketing strategy and foster customer loyalty.")
 
-st.text("count_reviews_per_category_and_overall")
+
 # Create the Plotly bar chart
-fig_bar = px.bar(count_reviews_per_category_and_overall, x='category', y='count', color='overall',
-             labels={'category': 'Category', 'count': 'Count', 'overall': 'Overall Rating'},
-             title='Count of Reviews per Category and Overall Rating')
+# Definir colores personalizados
+color_map = {
+    1: 'red',
+    2: 'green',
+    3: 'blue',
+    4: 'purple',
+    5: 'orange',
+}
+
+fig2 = px.bar(count_reviews_per_overall,
+              x='overall',
+              y='count',
+              color='overall',
+              color_discrete_map=color_map,  # Colores personalizados aquí
+              labels={'overall': 'Overall Rating', 'count': 'Count'},
+              title='Count of Reviews per Overall Rating')
+# Gráfico de dispersión con tamaño de burbuja y colores personalizados
+fig_bubble = px.scatter(count_reviews_per_category_and_overall,
+                        x='category',
+                        y='count',
+                        size='overall',
+                        color='overall',
+                        color_continuous_scale=px.colors.sequential.Viridis,  # Cambiar el mapa de colores aquí
+                        labels={'category': 'Category', 'count': 'Count', 'overall': 'Overall Rating'},
+                        title='Count of Reviews per Category and Overall Rating')
 
 
 col1, col2 = st.columns(2)
 
 
-col1.plotly_chart(fig_bar, use_container_width=True)
-col2.plotly_chart(fig_scatter, use_container_width=True )
+col1.plotly_chart(fig_bubble, use_container_width=True)
+col2.plotly_chart(fig2, use_container_width=True )
 
 #------------------------------------------------------------------------
+st.markdown('## 🚀 Strategic Business Planning')
+st.write("By collecting and analyzing data about your product and customer reviews, you will be well-positioned to devise an effective business strategy. In the realm of Product Search, having a detailed understanding of the data will enable you to thoroughly investigate which keywords, tags, or terms are most relevant to your product and appeal to your target audience. Identifying these essential keywords will improve the visibility of your product in online searches and, consequently, increase the chances of being found by potential customers. Additionally, understanding which aspects of your product stand out in reviews will allow you to optimize your marketing messages and highlight your strengths to attract more customers and differentiate yourself from the competition. In summary, knowing your data product will empower you to make intelligent decisions that drive your business's growth in an increasingly competitive market.")
+fig_scatter = px.scatter(mean_ratings_per_asin, x='avg_rating', size='count', text='count',
+                 labels={'asin': 'ASIN', 'avg_rating': 'Average Rating'},
+                 title='Product Ranking by Average Rating')
+
+# Definir colores personalizados
+color_map = {
+    1: 'red',
+    2: 'green',
+    3: 'blue',
+    4: 'purple',
+    5: 'orange',
+}
+
+fig2 = px.bar(count_reviews_per_overall,
+              x='overall',
+              y='count',
+              color='overall',
+              color_discrete_map=color_map,  # Colores personalizados aquí
+              labels={'overall': 'Overall Rating', 'count': 'Count'},
+              title='Count of Reviews per Overall Rating (Bar Chart)')
+
 
 fig1 = go.Figure([go.Bar(x=labels, y=values, marker=dict(color=['orange', 'purple']))])
 
@@ -152,18 +196,7 @@ fig1.update_layout(
     yaxis_title="Avg price"
 )
 
-fig2 = px.bar(count_reviews_per_overall, x='overall', y='count',
-             labels={'overall': 'Overall Rating', 'count': 'Count'},
-             title='Count of Reviews per Overall Rating')
-
-
 col1, col2 = st.columns(2)
-
 col1.plotly_chart(fig1, use_container_width=True)
-col2.plotly_chart(fig2, use_container_width=True )
+col2.plotly_chart(fig_scatter, use_container_width=True )
 
-
-fig3 = px.bar(count_similar_products_between_categories, x='category', y=['also_buy_count', 'also_view_count'],
-             labels={'category': 'Category', 'value': 'Count', 'variable': 'Type'},
-             title='Also Buy and Also View Count per Category')
-st.plotly_chart(fig3, use_container_width=True)
