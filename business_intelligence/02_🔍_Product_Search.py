@@ -18,11 +18,33 @@ pinecone.init(api_key=ct.PINECONE_API_KEY, environment=ct.PINECONE_ENVIRONMENT)
 index = pinecone.Index(ct.PINECONE_INDEX_NAME)
 
 # load data
-products_graph = pd.read_parquet("./data/graph.parquet")
-product_reviews = pd.read_parquet("./data/amazon_reviews.parquet")
-product_metadata = pd.read_parquet("./data/amazon_metadata.parquet")
-degree_centrality = pd.read_parquet("./data/degree_centrality.parquet")
-betweenness_centrality = pd.read_parquet("./data/betweenness_centrality.parquet")
+#products_graph = pd.read_parquet("./data/graph.parquet")
+#product_reviews = pd.read_parquet("./data/amazon_reviews.parquet")
+#product_metadata = pd.read_parquet("./data/amazon_metadata.parquet")
+#degree_centrality = pd.read_parquet("./data/degree_centrality.parquet")
+#betweenness_centrality = pd.read_parquet("./data/betweenness_centrality.parquet")
+
+data_list = [
+    {"share": "share__hackaton__streamlit", "schema": "gold", "table": "products_graph"},
+    {"share": "share__hackaton__streamlit", "schema": "silver", "table": "amazon_reviews_selected"},
+    {"share": "share__hackaton__streamlit", "schema": "silver", "table": "amazon_metadata_silver_selected"},
+    {"share": "share__hackaton__streamlit", "schema": "gold", "table": "degree_centrality_normalized"},
+    {"share": "share__hackaton__streamlit", "schema": "gold", "table": "betweenes_centrality"},
+]
+data = load_multiple_data(data_list)
+(
+    products_graph,
+    product_reviews,
+    product_metadata,
+    degree_centrality,
+    betweenness_centrality,
+) = itemgetter(
+    "products_graph",
+    "amazon_reviews_selected",
+    "amazon_metadata_silver_selected",
+    "degree_centrality_normalized",
+    "betweenes_centrality",
+)(data)
 
 # main title
 st.title("🔍 Product Search")
