@@ -3,10 +3,10 @@ import delta_sharing
 import json
 from os.path import exists
 
-PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
-PINECONE_ENVIRONMENT = st.secrets["PINECONE_ENVIRONMENT"]
-PINECONE_INDEX_NAME = st.secrets["PINECONE_INDEX_NAME"]
-HF_API_KEY = st.secrets["HF_API_KEY"]
+PINECONE_API_KEY = st.secrets.pinecone_credentials["PINECONE_API_KEY"]
+PINECONE_ENVIRONMENT = st.secrets.pinecone_credentials["PINECONE_ENVIRONMENT"]
+PINECONE_INDEX_NAME = st.secrets.pinecone_credentials["PINECONE_INDEX_NAME"]
+HF_API_KEY = st.secrets.pinecone_credentials["HF_API_KEY"]
 
 config_share = {
     "shareCredentialsVersion": st.secrets.delta_sharing_credentials.shareCredentialsVersion,
