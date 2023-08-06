@@ -1,6 +1,9 @@
 # Factored Datathon 2023 Datapalooza 🚀📊
 
-![Factored Datathon Logo](assets/logo.png)
+<div style="text-align: center;">
+<img src="assets/logo.png" alt="" width="400" />
+</div>
+
 
 Welcome to the Factored Datathon 2023 Datapalooza! 🎉 Join our team of passionate data enthusiasts as we delve into the exciting world of data-driven solutions. 📈💡
 
