@@ -18,7 +18,7 @@ Meet the brilliant minds behind this project:
 
 ## Deployed Solution 🚀
 
-Check out our deployed solution on Streamlit: [Factored Datathon 2023 Datapalooza](https://factored-datathon-2023-datapalooza.streamlit.app/Product_Search) 🛍️🔍
+Check out our deployed solution on Streamlit: [Factored Datathon 2023 Datapalooza](https://factored-datathon-2023-datapalooza.streamlit.app) 🛍️🔍
 
 ## Tech Stack 🛠️
 
