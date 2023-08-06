@@ -129,6 +129,7 @@ with tab1:
 
 
         product_metadata = products_metadata[products_metadata.asin == product_asin]
+
         product_reviews = products_reviews[products_reviews.asin == product_asin]
 
         # show additional product information
@@ -181,7 +182,8 @@ with tab1:
         main = result[(result.src == product_asin) | (result.label == "HAS_REVIEW")]  # & (result.src == product))]
         not_main = result[(result.src != product_asin) & (result.label != "HAS_REVIEW")]
         if len(not_main) != 0:
-            not_main = not_main.sample(n=200)
+            if len(not_main) > 200:
+                not_main = not_main.sample(n=200)
             result = pd.concat([main, not_main])
         else:
             result = main
@@ -259,10 +261,8 @@ with tab2:
     results_asin = list(degree_centrality.iloc[0:max_results]["node"].values)
 
     # Filter results metadata and reviews
-    print("results asin: ", results_asin)
     results_asin_mask = products_metadata["asin"].isin(results_asin)
     results_metadata = products_metadata[results_asin_mask].reset_index(drop=True).fillna("Not available")
-    print("results_metadata:", results_metadata)
 
     # Display query results
     options = list(results_metadata["title"].values)
@@ -346,7 +346,8 @@ with tab2:
     main = result[(result.src == product_asin) | (result.label == "HAS_REVIEW")]  # & (result.src == product))]
     not_main = result[(result.src != product_asin) & (result.label != "HAS_REVIEW")]
     if len(not_main) != 0:
-        not_main = not_main.sample(n=200)
+        if len(not_main) > 200:
+            not_main = not_main.sample(n=200)
         result = pd.concat([main, not_main])
     else:
         result = main
