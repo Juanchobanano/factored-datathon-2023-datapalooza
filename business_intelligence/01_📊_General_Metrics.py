@@ -9,11 +9,18 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 
+import time
+
 page_title="General Metrics"
+
+
 st.set_page_config(
     page_title, 
     page_icon="",
-    layout= "wide")
+    layout= "wide",
+    )
+
+
 
 data_list = [
     {"share": "share__hackaton__streamlit", "schema": "platinum", "table": "avg_words_per_review"},
@@ -80,19 +87,12 @@ data = load_multiple_data(data_list)
 
 
 
-#Valores de la cabeza del proyecto
-#total_products_per_category
-#count_similar_products_between_categories
-#count_verified_reviews_per_category
-#count_reviews_per_category
+#-----------------------------------------------------------------
 
 st.title('📈 Understanding the Importance of Knowing Your Data Product for Increased Sales')
 st.markdown('## 📊 Data-Driven Decision Making')
 st.write("Understanding your data product thoroughly is crucial for driving sales and business success in today's era. The market is increasingly moving towards a data-driven approach, and knowing how your customers perceive your product and their behavior in relation to it is a key factor in making informed strategic decisions. By comprehending the data behind your product, such as customer preferences, purchasing trends, and customer satisfaction, you can identify improvement opportunities and develop effective strategies to increase sales and enhance the customer experience.")
 
-
-# Selector para cambiar entre DataFrames
-opciones = ['Total products per category', 'Count reviews per category', 'Price comparison between categories']
 # Crear una lista con los valores de los KPIs
 values = [
     total_products_per_category['total_products'][0], # 0
@@ -169,25 +169,8 @@ fig_scatter = px.scatter(mean_ratings_per_asin, x='avg_rating', size='count', te
                  labels={'asin': 'ASIN', 'avg_rating': 'Average Rating'},
                  title='Product Ranking by Average Rating')
 
-# Definir colores personalizados
-color_map = {
-    1: 'red',
-    2: 'green',
-    3: 'blue',
-    4: 'purple',
-    5: 'orange',
-}
 
-fig2 = px.bar(count_reviews_per_overall,
-              x='overall',
-              y='count',
-              color='overall',
-              color_discrete_map=color_map,  # Colores personalizados aquí
-              labels={'overall': 'Overall Rating', 'count': 'Count'},
-              title='Count of Reviews per Overall Rating (Bar Chart)')
-
-
-fig1 = go.Figure([go.Bar(x=labels, y=values, marker=dict(color=['orange', 'purple']))])
+fig1 = go.Figure([go.Bar(x=labels, y=[values[4],values[5]], marker=dict(color=['orange', 'purple']))])
 
 # Actualizar el título y el nombre de los ejes
 fig1.update_layout(
