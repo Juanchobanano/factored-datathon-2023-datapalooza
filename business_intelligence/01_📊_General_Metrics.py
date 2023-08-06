@@ -21,6 +21,30 @@ st.set_page_config(
     )
 
 
+st.sidebar.title("About")
+st.sidebar.info(
+    """
+    - [GitHub repository][1]
+
+    [1]: https://github.com/Juanchobanano/factored-datathon-2023-datapalooza 
+    """
+)
+
+st.sidebar.title("Contact")
+st.sidebar.info(
+    """
+    [Juan Esteban Cepeda][1]\n
+    [Cristhian Jose Pardo Mercado][2]\n
+    [David Felipe Mora][3]\n
+    [Eduards Alexis Chipatecua][4]
+    
+    [1]: https://www.linkedin.com/in/juan-e-cepeda-gestion/
+    [2]: https://www.linkedin.com/in/cristhian-pardo/ 
+    [3]: https://www.linkedin.com/in/davidfmora/
+    [4]: https://www.linkedin.com/in/eduards-alexis-mendez-chipatecua-8584b21b4/
+    """
+)
+
 
 data_list = [
     {"share": "share__hackaton__streamlit", "schema": "platinum", "table": "avg_words_per_review"},
